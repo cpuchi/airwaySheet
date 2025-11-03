@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LTR Info Form</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 40px;
+    color: #333;
+  }
+  h1 {
+    font-size: 22px;
+    margin-bottom: 10px;
+  }
+  label {
+    font-weight: bold;
+  }
+  input, select {
+    margin: 5px 0 15px 0;
+    padding: 6px;
+    width: 225px;
+  }
+  .section-title {
+    font-weight: bold;
+    font-size: 18px;
+    margin-top: 25px;
+  }
+  #reintubate{
+    width:50px;
+  }
+
+  #pressure{
+    width:50px;
+  }
+
+  .emergency {
+    background-color: #f2f2f2;
+    padding: 10px;
+    border-radius: 6px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Patient initials:</h1>
+<input type="text" id="patientInitials" placeholder="Enter initials">
+
+<h1>Date of surgery:</h1>
+<input type="date" id="surgeryDate">
+
+<h1>Surgery:</h1>
+<input type="text" id="surgery" placeholder="Enter surgery name">
+
+<h1>Surgeon:</h1>
+<input type="text" id="surgeon" placeholder="Enter surgeon name">
+
+<div class="section-title">Current endotracheal tube:</div>
+<input type="text" id="ett" placeholder="Enter ETT size">
+
+<div class="section-title">Tube currently taped at:</div>
+<input type="text" id="tape" placeholder="Enter tube taping information">
+
+<div><strong>Suction depth (cm):</strong> <input type="text" id="depth"> - open suction only</div>
+
+<div class="section-title">In case of emergency:</div>
+<div class="emergency">
+  <p>RaDAR tier 2 activation.</p>
+  <p>Temporize with NIPPV / Heliox / bag mask ventilation while ENT mobilizing. ENT to reintubate over rod with <input type="text" id="reintubate">. Do not exceed pressure of <input type="text" id="pressure" placeholder="cmH2O"></p>
+</div>
+
+<p><strong>Grade</strong> <input type="text" id="grade" width="50"> view with Phillips <input type="text" id="phillips" width="50"></p>
+
+</body>
+</html>
