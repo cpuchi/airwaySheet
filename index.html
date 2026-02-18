@@ -246,9 +246,13 @@
                 </div>
             </div>
             <div class="procedure-title">
-                Procedure: <select id="procedure" value="" style="width: 300px;">
+                Procedure: <select id="procedure" value="" style="width: 760px; max-width: 100%;">
                     <option value="Tracheostomy" selected>Tracheostomy</option>
+                    <option value="Single-stage laryngotracheal reconstruction">Single-stage laryngotracheal reconstruction</option>
                 </select>
+            </div>
+            <div id="additional_details_row" style="margin-top: 4px;">
+                <strong>Additional details:</strong> <input type="text" class="autosize editable" id="additional_details" value="***">
             </div>
             <div style="margin-top: 8px;">
                 <strong>Attending:</strong> <input type="text" class="autosize" id="attending" value="***">
@@ -258,7 +262,7 @@
             </div>
         </div>
 
-        <div class="content-wrapper">
+        <div class="content-wrapper" id="trach-content">
             <div class="left-column">
                 <h3>Tracheostomy Details:</h3>
                 <ul>
@@ -293,7 +297,7 @@
                 </ul>
             </div>
 
-            <!-- //Add max width for editables
+            <!--
              //TODO Add undo command
              //TODO add custom logic for unlisted trachs -->
 
@@ -316,6 +320,50 @@
                 </svg>
             </div>
         </div>
+
+        <div class="content-wrapper" id="ltr-content" hidden>
+            <div class="left-column">
+                <h3>Airway Details:</h3>
+                <ul>
+                    <li>Grade <input type="text" id="ltr_grade" class="editable autosize" value="***"> view with <input type="text" id="ltr_view" class="editable autosize" value="***"></li>
+                    <li>
+                        Intubated with
+                        <select id="ltr_ett_size" class="autosize">
+                            <option value="3.0">3.0</option>
+                            <option value="3.5">3.5</option>
+                            <option value="4.0">4.0</option>
+                            <option value="4.5">4.5</option>
+                            <option value="5.0">5.0</option>
+                            <option value="5.5">5.5</option>
+                            <option value="6.0" selected>6.0</option>
+                            <option value="6.5">6.5</option>
+                            <option value="7.0">7.0</option>
+                        </select>
+                        <select id="ltr_cuff_type" class="autosize">
+                            <option value="cuffless" selected>cuffless</option>
+                            <option value="cuffed">cuffed</option>
+                        </select>
+                        ETT, <input type="text" id="ltr_ett_depth" class="editable autosize" value="***"> cm at the
+                        <select id="ltr_ett_position" class="autosize">
+                            <option value="nare" selected>nare</option>
+                            <option value="lip">lip</option>
+                        </select>
+                    </li>
+                    <li>Suction with an <input type="text" id="ltr_suction_size" class="editable autosize" value="***"> to <input type="text" id="ltr_suction_depth" class="editable autosize" value="***"> cm</li>
+                </ul>
+
+                <h3>Airway Plan:</h3>
+                <ul>
+                    <li><strong>RADAR 2 (all laryngotracheal reconstruction patients)</strong></li>
+                    <li>Can temporize with O2, heliox, racemic epinephrine</li>
+                    <li>Plan to reintubate with a <input type="text" id="ltr_reintubate_ett" class="editable autosize" value="***"> ETT over a rod</li>
+                    <li>Okay for positive pressure up to 20cm H20 due to newly placed grafts</li>
+                </ul>
+            </div>
+            <div class="right-column">
+                <img class="diagram" src="KqLSj01.svg" alt="Trachea diagram">
+            </div>
+        </div>
         <!-- <div class="no-print">
             <button onclick="window.print()">🖨️ Print</button>
             <button onclick="resetForm()">🔄 Reset</button>
@@ -329,6 +377,14 @@
         const trachs = document.getElementById('trachs');
         const downsize = document.getElementById('downsize');
         const cuff = document.getElementById('cuff');
+        const procedure = document.getElementById('procedure');
+        const trachContent = document.getElementById('trach-content');
+        const ltrContent = document.getElementById('ltr-content');
+        const additionalDetailsRow = document.getElementById('additional_details_row');
+        const ltrEttSize = document.getElementById('ltr_ett_size');
+        const ltrSuctionSize = document.getElementById('ltr_suction_size');
+        const ltrSuctionDepth = document.getElementById('ltr_suction_depth');
+        const ltrReintubateEtt = document.getElementById('ltr_reintubate_ett');
 
         trachs.appendChild(template.content.cloneNode(true));
         downsize.appendChild(template.content.cloneNode(true));
@@ -390,24 +446,68 @@
             "shiley6":{"Downsize": "shiley4","Depth":"13 cm","Fr":   "14 French", "ETT":"7.5"}
         }
 
-        trachs.addEventListener('change', (event) => {
-            const selectedValue = event.target.value;
+        const ltrTubeSizing = {
+            "3.0": { Fr: "6 French", Depth: "21.5" },
+            "3.5": { Fr: "6 French", Depth: "22.5" },
+            "4.0": { Fr: "8 French", Depth: "24" },
+            "4.5": { Fr: "8 French", Depth: "26.5" },
+            "5.0": { Fr: "10 French", Depth: "29.5" },
+            "5.5": { Fr: "10 French", Depth: "32" },
+            "6.0": { Fr: "12 French", Depth: "33" },
+            "6.5": { Fr: "12 French", Depth: "34" },
+            "7.0": { Fr: "14 French", Depth: "35.5" }
+        };
+
+        function updateTrachFields(selectedValue) {
+            if (!json[selectedValue]) {
+                return;
+            }
+
             downsize.value = json[selectedValue].Downsize;
             document.getElementById('fr_suction').value = json[selectedValue].Fr;
             document.getElementById('suction_to').value = json[selectedValue].Depth;
             document.getElementById('ETT').value = json[selectedValue].ETT;
+        }
+
+        function updateLtrSuctionFields() {
+            const selectedTube = ltrEttSize.value;
+            const sizing = ltrTubeSizing[selectedTube];
+            if (!sizing) {
+                return;
+            }
+
+            ltrSuctionSize.value = sizing.Fr;
+            ltrSuctionDepth.value = sizing.Depth;
+            ltrReintubateEtt.value = selectedTube;
+        }
+
+        function setSectionVisibility(element, isVisible, displayValue) {
+            element.hidden = !isVisible;
+            element.style.display = isVisible ? displayValue : 'none';
+        }
+
+        function syncProcedureLayout() {
+            const isLtr = procedure.value === 'Single-stage laryngotracheal reconstruction';
+            setSectionVisibility(trachContent, !isLtr, 'flex');
+            setSectionVisibility(ltrContent, isLtr, 'flex');
+            setSectionVisibility(additionalDetailsRow, true, 'block');
+        }
+
+        trachs.addEventListener('change', (event) => {
+            updateTrachFields(event.target.value);
         });
 
         cuff.addEventListener('change', (event) => {
-            const selectedValue = event.target.value;
             const cuffLi = document.getElementById('cuff_li');
-            if (selectedValue === 'cuffed') {
-                cuffLi.hidden = false;
-                console.log('Cuffed selected');
-            } else {
-                cuffLi.hidden = true;
-            }
+            cuffLi.hidden = event.target.value !== 'cuffed';
         });
+
+        ltrEttSize.addEventListener('change', updateLtrSuctionFields);
+        procedure.addEventListener('change', syncProcedureLayout);
+
+        updateTrachFields(trachs.value);
+        updateLtrSuctionFields();
+        syncProcedureLayout();
         
 
         function resetForm() {
